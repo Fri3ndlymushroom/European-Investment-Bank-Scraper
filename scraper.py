@@ -17,13 +17,19 @@ browser = webdriver.Chrome(service=service)
 
 def goToPage(url):
     browser.get(url)
-    time.sleep(1)
+    time.sleep(1)  # change this to edit delay between page loads
 
 
 def statusPrint(message):
-    print("-------------------------------------")
     print(message)
     print("-------------------------------------")
+
+
+def returnIfDefined(value):
+    if value is None:
+        return ""
+    else:
+        return value
 
 
 # get covid results
@@ -51,18 +57,14 @@ for covid_article in covid_articles:
 
 covid_references = []
 
-k = 0
+#covid_links = ["https://www.eib.org/en/projects/pipelines/all/20210690"]
+
+statusPrint("Collecting Covid project references")
+
 for covid_link in covid_links:
-    statusPrint("Scraping Covid Project "+str(k+1)+"/" + str(len(covid_links)))
+    covid_references.append(re.findall("(?<=all/).*$", covid_link)[0])
 
-    goToPage(covid_link)
-    html = browser.page_source
-    soup = BeautifulSoup(html, 'html.parser')
-    covid_references.append(
-        soup.find('div', {"class": "pipeline-ref"}).find_all("span")[1].text)
-    k+= 1
-
-
+print(covid_references)
 # get all projects
 statusPrint("Collecting all Projects")
 
@@ -81,8 +83,13 @@ articles = soup.find_all("article")
 del articles[0]
 links = []
 
+l = 0
 for article in articles:
+    statusPrint("Collecting Covid Project https://www.eib.org" +
+                article.a.get('href') + " || " + str(l+1) + "/" + str(len(articles)))
+
     links.append("https://www.eib.org"+article.a.get('href'))
+    l += 1
 
 
 # search
@@ -93,9 +100,12 @@ class Project:
 
 raw_data = []
 
+#links = ["https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all/20210690","https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540"]
+
 y = 0
 for link in links:
-    statusPrint("Scraping Project "+str(y+1)+"/" + str(len(links)))
+    statusPrint("Scraping Project " + link + " || " +
+                str(y+1) + "/" + str(len(links)))
 
     browser.get(link)
     html = browser.page_source
@@ -105,29 +115,36 @@ for link in links:
     currentProject.link = link
 
     # summary sheet
-    summary = soup.find_all(
-        "div", {"id": "pipeline"})[0]
+    found_summary_sheet = False
+    try:
+        summary = soup.find_all(
+            "div", {"id": "pipeline"})[0]
 
-    batch = summary.find_all(
-        "div", {"class": "eib-list__column"})
+        batch = summary.find_all(
+            "div", {"class": "eib-list__column"})
+        i = 0
+        for div in batch:
+            batch[i] = div.text
+            i += 1
 
-    i = 0
-    for div in batch:
-        batch[i] = div.text
-        i += 1
+        found_summary_sheet = True
+    except:
+        found_summary_sheet = False
 
-    currentProject.release_date = batch[1]
-    currentProject.status = batch[4]
-    currentProject.reference = batch[5]
-    currentProject.project_name = batch[8]
-    currentProject.promoter = batch[9]
-    currentProject.total_cost = batch[13]
-    currentProject.location = batch[16]
-    currentProject.sector = batch[17]
-    currentProject.description = batch[20]
-    currentProject.objectives = batch[21]
-    currentProject.environmental_aspects = batch[24]
-    currentProject.procurement = batch[25]
+    if (found_summary_sheet):
+
+        currentProject.release_date = returnIfDefined(batch[1])
+        currentProject.status = returnIfDefined(batch[4])
+        currentProject.reference = returnIfDefined(batch[5])
+        currentProject.project_name = returnIfDefined(batch[8])
+        currentProject.promoter = returnIfDefined(batch[9])
+        currentProject.total_cost = returnIfDefined(batch[13])
+        currentProject.location = returnIfDefined(batch[16])
+        currentProject.sector = returnIfDefined(batch[17])
+        currentProject.description = returnIfDefined(batch[20])
+        currentProject.objectives = returnIfDefined(batch[21])
+        currentProject.environmental_aspects = returnIfDefined(batch[24])
+        currentProject.procurement = returnIfDefined(batch[25])
 
     # links
     batch = soup.find_all(
@@ -142,15 +159,15 @@ for link in links:
         for section in sections:
             links_bundle.append(section.find_all("a")[1])
 
-        links = []
+        other_links = []
         for link in links_bundle:
-            links.append("https://www.eib.org"+link.get('href'))
+            other_links.append("https://www.eib.org"+link.get('href'))
 
         links_title = []
         for link in links_bundle:
             links_title.append(link.text)
 
-        currentProject.other_links = links
+        currentProject.other_links = other_links
         currentProject.other_links_title = links_title
     else:
         currentProject.other_links = []
@@ -160,27 +177,36 @@ for link in links:
     has_signature_tab = len(soup.find_all("div", {"id": "loan"})) > 0
 
     if (has_signature_tab):
-        summary = soup.find_all(
-            "div", {"id": "loan"})[0]
+        try:
+            summary = soup.find_all(
+                "div", {"id": "loan"})[0]
 
-        batch = summary.find_all(
-            "div", {"class": "eib-list__column"})
+            batch = summary.find_all(
+                "div", {"class": "eib-list__column"})
 
-        i = 0
-        for div in batch:
-            batch[i] = div.text
-            i += 1
+            i = 0
+            for div in batch:
+                batch[i] = div.text
+                i += 1
 
-        currentProject.amount = batch[1]
-        currentProject.countries = batch[4]
-        currentProject.sectors = batch[5]
-
+            currentProject.amount = batch[1]
+            currentProject.countries = batch[4]
+            currentProject.sectors = batch[5]
+        except:
+            currentProject.amount = ""
+            currentProject.countries = ""
+            currentProject.sectors = ""
     else:
         currentProject.amount = ""
         currentProject.countries = ""
         currentProject.sectors = ""
 
-    currentProject.covid_project = currentProject.reference in covid_references
+    try:
+        print(currentProject.reference)
+        print(covid_references)
+        currentProject.covid_project = currentProject.reference.strip() in covid_references
+    except:
+        currentProject.covid_project = "N/A"
 
     raw_data.append(currentProject)
     y += 1
@@ -190,7 +216,8 @@ browser.close()
 browser.quit()
 
 
-statusPrint("Refactoring Projects")
+statusPrint("Formating Projects")
+
 
 class Refactored:
     def __init__(self):
@@ -201,7 +228,11 @@ refactored_data = []
 
 
 # refactor
+n = 0
 for project in raw_data:
+
+    statusPrint("Formating Project" + project.link +
+                " || " + str(n+1) + "/" + str(len(raw_data)))
 
     current = Refactored()
 
@@ -212,171 +243,252 @@ for project in raw_data:
     current.link = project.link
 
     # release date
-    current.release_date = project.release_date.strip()
+    try:
+        current.release_date = project.release_date.strip()
+    except:
+        current.release_date = "N/A"
 
     # status
-    cleaned = project.status.strip()
-    current.status = re.search("(.*?)(?= \|)", cleaned)[0]
-    current.status_date = re.search("(?<=\| ).*$", cleaned)[0]
+    try:
+        cleaned = project.status.strip()
+        current.status = re.search("(.*?)(?= \|)", cleaned)[0]
+        current.status_date = re.search("(?<=\| ).*$", cleaned)[0]
+    except:
+        current.status = "N/A"
+        current.status_date = "N/A"
 
     # reference
-    current.reference = project.reference.strip()
+    try:
+        current.reference = project.reference.strip()
+    except:
+        current.reference = "N/A"
 
     # project name
-    current.project_name = project.project_name.strip()
-    # promoter
-    current.promoter = project.promoter.strip()
+    try:
+        current.project_name = project.project_name.strip()
+    except:
+        current.project_name = "N/A"
+    # promoter¨
+    try:
+        current.promoter = project.promoter.strip()
+    except:
+        current.promoter = "N/A"
 
     # total cost
-    cleaned = project.total_cost.strip()
-    parts = re.findall("[^ ]*", cleaned)
-    current.total_cost_currency = parts[0]
-    current.total_cost_amount = parts[2]
-    current.total_cost_scale = parts[4]
+    try:
+        cleaned = project.total_cost.strip()
+        parts = re.findall("[^ ]*", cleaned)
+        current.total_cost_currency = parts[0]
+        current.total_cost_amount = parts[2]
+        current.total_cost_scale = parts[4]
+    except:
+        current.total_cost_currency = "N/A"
+        current.total_cost_amount = "N/A"
+        current.total_cost_scale = "N/A"
 
     # location
-    current.location = project.location.strip()
+    try:
+        current.location = project.location.strip()
+    except:
+        current.location = "N/A"
 
     # description
-
-    current.description = project.description.strip()
-
+    try:
+        current.description = project.description.strip()
+    except:
+        current.description = "N/A"
 
     # objectives
-    current.objectives = project.objectives.strip()
-
+    try:
+        current.objectives = project.objectives.strip()
+    except:
+        current.objectives = "N/A"
     # environmental aspects
-    current.environmental_aspects = project.environmental_aspects.strip()
+    try:
+        current.environmental_aspects = project.environmental_aspects.strip()
+    except:
+        current.environmental_aspects = "N/A"
 
     # procurement
-    current.procurement = project.procurement.strip()
+    try:
+        current.procurement = project.procurement.strip()
+    except:
+        current.procurement = "N/A"
 
     # other links
-    linkstring = ""
+    try:
+        linkstring = ""
 
-    i = 0
-    for link in project.other_links:
-        linkstring = linkstring + \
-            project.other_links_title[i] + ": " + link + " || "
-        i += 1
+        i = 0
+        for link in project.other_links:
+            linkstring = linkstring + \
+                project.other_links_title[i] + ": " + link + " || "
+            i += 1
 
-    current.other_links = linkstring
+        current.other_links = linkstring
+    except:
+        current.other_links = "N/A"
 
     # amount
-    cleaned = project.amount.strip()
-    parts = re.findall("[^ ]*", cleaned)
-    current.amount_currency = parts[0]
-    current.amount = parts[2]
+    try:
+        cleaned = project.amount.strip()
+        parts = re.findall("[^ ]*", cleaned)
+        current.amount_currency = parts[0]
+        current.amount = parts[2]
+    except:
+        current.amount_currency = "N/A"
+        current.amount = "N/A"
 
     # counries
-    cleaned = str(project.countries)
-    lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
-    content_lines = []
+    try:
+        cleaned = str(project.countries)
+        lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
+        content_lines = []
 
-    for line in lines:
-        if line != "":
-            content_lines.append(line)
+        for line in lines:
+            if line != "":
+                content_lines.append(line)
 
-    current.countries_1 = content_lines[0]
-    current.countries_1_currency = re.findall(
-        "(?<=: )(.*?)(?= )", content_lines[1])[0]
-    currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[1])
-    current.countries_1_amount = re.findall(
-        "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
-
-    if len(content_lines) > 2:
-        current.countries_2 = content_lines[2]
-        current.countries_2_currency = re.findall(
-            "(?<=: )(.*?)(?= )", content_lines[3])[0]
-        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[3])
-        current.countries_2_amount = re.findall(
+        current.countries_1 = content_lines[0]
+        current.countries_1_currency = re.findall(
+            "(?<=: )(.*?)(?= )", content_lines[1])[0]
+        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[1])
+        current.countries_1_amount = re.findall(
             "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
-    else:
-        current.countries_2 = ""
-        current.countries_2_currency = ""
-        current.countries_2_amount = ""
 
-    if len(content_lines) > 4:
-        current.countries_3 = content_lines[4]
-        current.countries_3_currency = re.findall(
-            "(?<=: )(.*?)(?= )", content_lines[5])[0]
-        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[5])
-        current.countries_3_amount = re.findall(
-            "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
-    else:
-        current.countries_3 = ""
-        current.countries_3_currency = ""
-        current.countries_3_amount = ""
+        if len(content_lines) > 2:
+            current.countries_2 = content_lines[2]
+            current.countries_2_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[3])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[3])
+            current.countries_2_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        else:
+            current.countries_2 = "No Entry"
+            current.countries_2_currency = "No Entry"
+            current.countries_2_amount = "No Entry"
+
+        if len(content_lines) > 4:
+            current.countries_3 = content_lines[4]
+            current.countries_3_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[5])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[5])
+            current.countries_3_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        else:
+            current.countries_3 = "No Entry"
+            current.countries_3_currency = "No Entry"
+            current.countries_3_amount = "No Entry"
+    except:
+        except_value = "N/A"
+        if project.sector == "":
+            except_value = "No Entry"
+        
+        current.countries_1 = except_value
+        current.countries_1_currency = except_value
+        current.countries_1_amount = except_value
+        current.countries_2 = except_value
+        current.countries_2_currency = except_value
+        current.countries_2_amount = except_value
+        current.countries_3 = except_value
+        current.countries_3_currency = except_value
+        current.countries_3_amount = except_value
 
     # sectors
 
-    # sector
-    cleaned = str(project.sector)
-    lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
-    sector_descriptions = []
+    try:
+        cleaned = str(project.sector)
+        lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
+        sector_descriptions = []
 
-    for line in lines:
-        if line != "":
-            sector_descriptions.append(line)
+        for line in lines:
+            if line != "":
+                sector_descriptions.append(line)
 
-    cleaned = str(project.sectors)
-    lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
-    content_lines = []
+        cleaned = str(project.sectors)
+        lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
+        content_lines = []
 
-    for line in lines:
-        if line != "":
-            content_lines.append(line)
+        for line in lines:
+            if line != "":
+                content_lines.append(line)
 
-    current.sectors_1 = content_lines[0]
-    current.sectors_1_currency = re.findall(
-        "(?<=: )(.*?)(?= )", content_lines[1])[0]
-    currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[1])
-    current.sectors_1_amount = re.findall(
-        "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
-    current.sectors_1_description = re.findall(
-        "(?<=- )(.+?)(?=$)", sector_descriptions[1])[0]
-
-    if len(content_lines) > 2:
-        current.sectors_2 = content_lines[2]
-        current.sectors_2_currency = re.findall(
-            "(?<=: )(.*?)(?= )", content_lines[3])[0]
-        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[3])
-        current.sectors_2_amount = re.findall(
+        current.sectors_1 = content_lines[0]
+        current.sectors_1_currency = re.findall(
+            "(?<=: )(.*?)(?= )", content_lines[1])[0]
+        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[1])
+        current.sectors_1_amount = re.findall(
             "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
-        current.sectors_2_description = re.findall(
-            "(?<=- )(.+?)(?=$)", sector_descriptions[3])[0]
-    else:
-        current.sectors_2 = ""
-        current.sectors_2_currency = ""
-        current.sectors_2_amount = ""
-        current.sectors_2_description = ""
+        current.sectors_1_description = re.findall(
+            "(?<=- )(.+?)(?=$)", sector_descriptions[1])[0]
 
-    if len(content_lines) > 4:
-        current.sectors_3 = content_lines[4]
-        current.sectors_3_currency = re.findall(
-            "(?<=: )(.*?)(?= )", content_lines[5])[0]
-        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[5])
-        current.sectors_3_amount = re.findall(
-            "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
-        current.sectors_3_description = re.findall(
-            "(?<=- )(.+?)(?=$)", sector_descriptions[5])[0]
-    else:
-        current.sectors_3 = ""
-        current.sectors_3_currency = ""
-        current.sectors_3_amount = ""
-        current.sectors_3_description = ""
+        if len(content_lines) > 2:
+            current.sectors_2 = content_lines[2]
+            current.sectors_2_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[3])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[3])
+            current.sectors_2_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+            current.sectors_2_description = re.findall(
+                "(?<=- )(.+?)(?=$)", sector_descriptions[3])[0]
+        else:
+            current.sectors_2 = "No Entry"
+            current.sectors_2_currency = "No Entry"
+            current.sectors_2_amount = "No Entry"
+            current.sectors_2_description = "No Entry"
+
+        if len(content_lines) > 4:
+            current.sectors_3 = content_lines[4]
+            current.sectors_3_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[5])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[5])
+            current.sectors_3_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+            current.sectors_3_description = re.findall(
+                "(?<=- )(.+?)(?=$)", sector_descriptions[5])[0]
+        else:
+            current.sectors_3 = "No Entry"
+            current.sectors_3_currency = "No Entry"
+            current.sectors_3_amount = "No Entry"
+            current.sectors_3_description = "No Entry"
+    except:
+        except_value = "N/A"
+        if project.sector == "":
+            except_value = "No Entry"
+
+        current.sectors_1 = except_value
+        current.sectors_1_currency = except_value
+        current.sectors_1_amount = except_value
+        current.sectors_1_description = except_value
+        current.sectors_2 = except_value
+        current.sectors_2_currency = except_value
+        current.sectors_2_amount = except_value
+        current.sectors_2_description = except_value
+        current.sectors_3 = except_value
+        current.sectors_3_currency = except_value
+        current.sectors_3_amount = except_value
+        current.sectors_3_description = except_value
 
     current.covid_project = project.covid_project
 
     refactored_data.append(current)
+    n += 1
 
 statusPrint("Writing to excel")
 
 workbook = xlsxwriter.Workbook('results.xlsx')
 worksheet = workbook.add_worksheet()
 
-i = 1
+i = 2
 for project in refactored_data:
+
+    statusPrint("Writing Project to Excel" + project.link +
+                " || " + str(i - 1) + "/" + str(len(refactored_data)))
+
     worksheet.write('A'+str(i), project.link)
     worksheet.write('B'+str(i), project.release_date)
     worksheet.write('C'+str(i), project.status)
