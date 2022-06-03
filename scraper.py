@@ -193,13 +193,13 @@ for link in links:
             currentProject.countries = batch[4]
             currentProject.sectors = batch[5]
         except:
-            currentProject.amount = ""
-            currentProject.countries = ""
-            currentProject.sectors = ""
+            currentProject.amount = "N/A"
+            currentProject.countries = "N/A"
+            currentProject.sectors = "N/A"
     else:
-        currentProject.amount = ""
-        currentProject.countries = ""
-        currentProject.sectors = ""
+        currentProject.amount = "No Entry"
+        currentProject.countries = "No Entry"
+        currentProject.sectors = "No Entry"
 
     try:
         print(currentProject.reference)
@@ -383,7 +383,7 @@ for project in raw_data:
             current.countries_3_amount = "No Entry"
     except:
         except_value = "N/A"
-        if project.sector == "":
+        if project.countries == "":
             except_value = "No Entry"
         
         current.countries_1 = except_value
@@ -399,13 +399,7 @@ for project in raw_data:
     # sectors
 
     try:
-        cleaned = str(project.sector)
-        lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
-        sector_descriptions = []
 
-        for line in lines:
-            if line != "":
-                sector_descriptions.append(line)
 
         cleaned = str(project.sectors)
         lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
@@ -457,7 +451,7 @@ for project in raw_data:
             current.sectors_3_description = "No Entry"
     except:
         except_value = "N/A"
-        if project.sector == "":
+        if project.sectors == "":
             except_value = "No Entry"
 
         current.sectors_1 = except_value
