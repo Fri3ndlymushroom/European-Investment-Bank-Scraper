@@ -14,6 +14,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 service = ChromeService(executable_path=ChromeDriverManager().install())
 browser = webdriver.Chrome(service=service)
 
+TEST_MODE = False
+
 
 def goToPage(url):
     browser.get(url)
@@ -57,8 +59,6 @@ for covid_article in covid_articles:
 
 covid_references = []
 
-#covid_links = ["https://www.eib.org/en/projects/pipelines/all/20210690"]
-
 statusPrint("Collecting Covid project references")
 
 for covid_link in covid_links:
@@ -70,10 +70,14 @@ statusPrint("Collecting all Projects")
 
 url = "https://www.eib.org/en/projects/all/index.htm?q=&sortColumn=statusDate&sortDir=desc&pageNumber=0&itemPerPage=9&pageable=false&language=EN&defaultLanguage=EN&=&or=true&yearFrom=2018&yearTo=2022&status=approved&status=signed&orStatus=true&orRegions=true&orCountries=true&orSectors=true"
 goToPage(url)
+if not TEST_MODE:
+    el = browser.find_element_by_id(
+        'show-entries').find_elements_by_tag_name('option')[4].click()
 
-el = browser.find_element_by_id(
-    'show-entries').find_elements_by_tag_name('option')[4].click()
-time.sleep(20)
+if not TEST_MODE:
+    time.sleep(20)
+else:
+    time.sleep(1)
 
 html = browser.page_source
 soup = BeautifulSoup(html, 'html.parser')
@@ -100,7 +104,9 @@ class Project:
 
 raw_data = []
 
-#links = ["https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all/20210690","https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540"]
+if TEST_MODE:
+    links = ["https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all/20210690",
+             "https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all//20210116"]
 
 y = 0
 for link in links:
@@ -138,6 +144,7 @@ for link in links:
         currentProject.reference = returnIfDefined(batch[5])
         currentProject.project_name = returnIfDefined(batch[8])
         currentProject.promoter = returnIfDefined(batch[9])
+        currentProject.proposed = returnIfDefined(batch[12])
         currentProject.total_cost = returnIfDefined(batch[13])
         currentProject.location = returnIfDefined(batch[16])
         currentProject.sector = returnIfDefined(batch[17])
@@ -195,15 +202,13 @@ for link in links:
         except:
             currentProject.amount = "N/A"
             currentProject.countries = "N/A"
-            currentProject.sectors = "N/A"
+            currentProject.sectors = ""
     else:
         currentProject.amount = "No Entry"
         currentProject.countries = "No Entry"
-        currentProject.sectors = "No Entry"
+        currentProject.sectors = ""
 
     try:
-        print(currentProject.reference)
-        print(covid_references)
         currentProject.covid_project = currentProject.reference.strip() in covid_references
     except:
         currentProject.covid_project = "N/A"
@@ -268,11 +273,23 @@ for project in raw_data:
         current.project_name = project.project_name.strip()
     except:
         current.project_name = "N/A"
-    # promoter¨
+    # promoter
     try:
         current.promoter = project.promoter.strip()
     except:
         current.promoter = "N/A"
+
+    # proposed
+    try:
+        cleaned = project.proposed.strip()
+        parts = re.findall("[^ ]*", cleaned)
+        current.proposed_currency = parts[0]
+        current.proposed_amount = parts[2]
+        current.proposed_scale = parts[4]
+    except:
+        current.proposed_currency = "N/A"
+        current.proposed_amount = "N/A"
+        current.proposed_scale = "N/A"
 
     # total cost
     try:
@@ -385,7 +402,7 @@ for project in raw_data:
         except_value = "N/A"
         if project.countries == "":
             except_value = "No Entry"
-        
+
         current.countries_1 = except_value
         current.countries_1_currency = except_value
         current.countries_1_amount = except_value
@@ -397,58 +414,72 @@ for project in raw_data:
         current.countries_3_amount = except_value
 
     # sectors
+    current.sectors_1 = "No Entry"
+    current.sectors_1_currency = "No Entry"
+    current.sectors_1_amount = "No Entry"
+    current.sectors_1_description = "No Entry"
+    current.sectors_2 = "No Entry"
+    current.sectors_2_currency = "No Entry"
+    current.sectors_2_amount = "No Entry"
+    current.sectors_2_description = "No Entry"
+    current.sectors_3 = "No Entry"
+    current.sectors_3_currency = "No Entry"
+    current.sectors_3_amount = "No Entry"
+    current.sectors_3_description = "No Entry"
 
     try:
-
-
-        cleaned = str(project.sectors)
+        cleaned = str(project.sector)
         lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
-        content_lines = []
+        sector_descriptions = []
 
         for line in lines:
             if line != "":
-                content_lines.append(line)
+                sector_descriptions.append(line)
 
-        current.sectors_1 = content_lines[0]
-        current.sectors_1_currency = re.findall(
-            "(?<=: )(.*?)(?= )", content_lines[1])[0]
-        currency_and_amount = re.findall("(?<= )(.+?)(?=$)", content_lines[1])
-        current.sectors_1_amount = re.findall(
-            "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        current.sectors_1 = sector_descriptions[0]
         current.sectors_1_description = re.findall(
             "(?<=- )(.+?)(?=$)", sector_descriptions[1])[0]
 
-        if len(content_lines) > 2:
-            current.sectors_2 = content_lines[2]
-            current.sectors_2_currency = re.findall(
-                "(?<=: )(.*?)(?= )", content_lines[3])[0]
+        if (not project.sectors == ""):
+            cleaned = str(project.sectors)
+            lines = re.findall("(?<=\\n)(.*?)(?=\\n)", cleaned)
+            content_lines = []
+
+            for line in lines:
+                if line != "":
+                    content_lines.append(line)
+
+            current.sectors_1_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[1])[0]
             currency_and_amount = re.findall(
-                "(?<= )(.+?)(?=$)", content_lines[3])
-            current.sectors_2_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[1])
+            current.sectors_1_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+
+        if len(sector_descriptions) > 2:
+            current.sectors_2 = sector_descriptions[2]
             current.sectors_2_description = re.findall(
                 "(?<=- )(.+?)(?=$)", sector_descriptions[3])[0]
-        else:
-            current.sectors_2 = "No Entry"
-            current.sectors_2_currency = "No Entry"
-            current.sectors_2_amount = "No Entry"
-            current.sectors_2_description = "No Entry"
+            if(not project.sectors == ""):
+                current.sectors_2_currency = re.findall(
+                    "(?<=: )(.*?)(?= )", content_lines[3])[0]
+                currency_and_amount = re.findall(
+                    "(?<= )(.+?)(?=$)", content_lines[3])
+                current.sectors_2_amount = re.findall(
+                    "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
 
-        if len(content_lines) > 4:
-            current.sectors_3 = content_lines[4]
-            current.sectors_3_currency = re.findall(
-                "(?<=: )(.*?)(?= )", content_lines[5])[0]
-            currency_and_amount = re.findall(
-                "(?<= )(.+?)(?=$)", content_lines[5])
-            current.sectors_3_amount = re.findall(
-                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        if len(sector_descriptions) > 4:
+            current.sectors_3 = sector_descriptions[3]
             current.sectors_3_description = re.findall(
                 "(?<=- )(.+?)(?=$)", sector_descriptions[5])[0]
-        else:
-            current.sectors_3 = "No Entry"
-            current.sectors_3_currency = "No Entry"
-            current.sectors_3_amount = "No Entry"
-            current.sectors_3_description = "No Entry"
+            if(not project.sectors == ""):
+                current.sectors_3_currency = re.findall(
+                    "(?<=: )(.*?)(?= )", content_lines[5])[0]
+                currency_and_amount = re.findall(
+                    "(?<= )(.+?)(?=$)", content_lines[0])
+                current.sectors_3_amount = re.findall(
+                    "(?<= )(.+?)(?=$)", currency_and_amount[5])[0]
+
     except:
         except_value = "N/A"
         if project.sectors == "":
@@ -493,36 +524,39 @@ for project in refactored_data:
     worksheet.write('H'+str(i), project.total_cost_currency)
     worksheet.write('I'+str(i), project.total_cost_amount)
     worksheet.write('J'+str(i), project.total_cost_scale)
-    worksheet.write('K'+str(i), project.location)
-    worksheet.write('L'+str(i), project.description)
-    worksheet.write('M'+str(i), project.objectives)
-    worksheet.write('N'+str(i), project.environmental_aspects)
-    worksheet.write('O'+str(i), project.procurement)
-    worksheet.write('P'+str(i), project.other_links)
-    worksheet.write('Q'+str(i), project.amount_currency)
-    worksheet.write('R'+str(i), project.amount)
-    worksheet.write('S'+str(i), project.countries_1)
-    worksheet.write('T'+str(i), project.countries_1_currency)
-    worksheet.write('U'+str(i), project.countries_1_amount)
-    worksheet.write('V'+str(i), project.countries_2)
-    worksheet.write('W'+str(i), project.countries_2_currency)
-    worksheet.write('X'+str(i), project.countries_2_amount)
-    worksheet.write('Y'+str(i), project.countries_3)
-    worksheet.write('Z'+str(i), project.countries_3_currency)
-    worksheet.write('AA'+str(i), project.countries_3_amount)
-    worksheet.write('AB'+str(i), project.sectors_1)
-    worksheet.write('AC'+str(i), project.sectors_1_currency)
-    worksheet.write('AD'+str(i), project.sectors_1_amount)
-    worksheet.write('AE'+str(i), project.sectors_1_description)
-    worksheet.write('AF'+str(i), project.sectors_2)
-    worksheet.write('AG'+str(i), project.sectors_2_currency)
-    worksheet.write('AH'+str(i), project.sectors_2_amount)
-    worksheet.write('AI'+str(i), project.sectors_2_description)
-    worksheet.write('AJ'+str(i), project.sectors_3)
-    worksheet.write('AK'+str(i), project.sectors_3_currency)
-    worksheet.write('AL'+str(i), project.sectors_3_amount)
-    worksheet.write('AM'+str(i), project.sectors_3_description)
-    worksheet.write('AN'+str(i), project.covid_project)
+    worksheet.write('K'+str(i), project.proposed_currency)
+    worksheet.write('L'+str(i), project.proposed_amount)
+    worksheet.write('M'+str(i), project.proposed_scale)
+    worksheet.write('N'+str(i), project.location)
+    worksheet.write('O'+str(i), project.description)
+    worksheet.write('P'+str(i), project.objectives)
+    worksheet.write('Q'+str(i), project.environmental_aspects)
+    worksheet.write('R'+str(i), project.procurement)
+    worksheet.write('S'+str(i), project.other_links)
+    worksheet.write('T'+str(i), project.amount_currency)
+    worksheet.write('U'+str(i), project.amount)
+    worksheet.write('V'+str(i), project.countries_1)
+    worksheet.write('W'+str(i), project.countries_1_currency)
+    worksheet.write('X'+str(i), project.countries_1_amount)
+    worksheet.write('Y'+str(i), project.countries_2)
+    worksheet.write('Z'+str(i), project.countries_2_currency)
+    worksheet.write('AA'+str(i), project.countries_2_amount)
+    worksheet.write('AB'+str(i), project.countries_3)
+    worksheet.write('AC'+str(i), project.countries_3_currency)
+    worksheet.write('AD'+str(i), project.countries_3_amount)
+    worksheet.write('AF'+str(i), project.sectors_1)
+    worksheet.write('AG'+str(i), project.sectors_1_description)
+    worksheet.write('AH'+str(i), project.sectors_1_currency)
+    worksheet.write('AI'+str(i), project.sectors_1_amount)
+    worksheet.write('AJ'+str(i), project.sectors_2)
+    worksheet.write('AK'+str(i), project.sectors_2_description)
+    worksheet.write('AL'+str(i), project.sectors_2_currency)
+    worksheet.write('AM'+str(i), project.sectors_2_amount)
+    worksheet.write('AN'+str(i), project.sectors_3)
+    worksheet.write('AO'+str(i), project.sectors_3_description)
+    worksheet.write('AP'+str(i), project.sectors_3_currency)
+    worksheet.write('AQ'+str(i), project.sectors_3_amount)
+    worksheet.write('AR'+str(i), project.covid_project)
 
     i += 1
 
