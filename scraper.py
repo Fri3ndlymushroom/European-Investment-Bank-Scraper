@@ -150,8 +150,17 @@ for link in links:
         currentProject.sector = returnIfDefined(batch[17])
         currentProject.description = returnIfDefined(batch[20])
         currentProject.objectives = returnIfDefined(batch[21])
-        currentProject.environmental_aspects = returnIfDefined(batch[24])
-        currentProject.procurement = returnIfDefined(batch[25])
+
+        AdditionalityAndImpactOffset = 0
+        if len(batch) > 36:
+            AdditionalityAndImpactOffset = 2
+            currentProject.additionality_and_impact = returnIfDefined(
+                batch[23])
+
+        currentProject.environmental_aspects = returnIfDefined(
+            batch[24 + AdditionalityAndImpactOffset])
+        currentProject.procurement = returnIfDefined(
+            batch[25 + AdditionalityAndImpactOffset])
 
     # links
     batch = soup.find_all(
@@ -320,6 +329,11 @@ for project in raw_data:
         current.objectives = project.objectives.strip()
     except:
         current.objectives = "N/A"
+    # additionality and impact
+    try:
+        current.additionality_and_impact = project.additionality_and_impact.strip()
+    except:
+        current.additionality_and_impact = "N/A"
     # environmental aspects
     try:
         current.environmental_aspects = project.environmental_aspects.strip()
@@ -508,6 +522,51 @@ statusPrint("Writing to excel")
 workbook = xlsxwriter.Workbook('results.xlsx')
 worksheet = workbook.add_worksheet()
 
+worksheet.write('A1', 'link')
+worksheet.write('B1', 'release_date')
+worksheet.write('C1', 'status')
+worksheet.write('D1', 'status_date')
+worksheet.write('E1', 'reference')
+worksheet.write('F1', 'project_name')
+worksheet.write('G1', 'promoter')
+worksheet.write('H1', 'total_cost_currency')
+worksheet.write('I1', 'total_cost_amount')
+worksheet.write('J1', 'total_cost_scale')
+worksheet.write('K1', 'proposed_currency')
+worksheet.write('L1', 'proposed_amount')
+worksheet.write('M1', 'proposed_scale')
+worksheet.write('N1', 'location')
+worksheet.write('O1', 'description')
+worksheet.write('P1', 'objectives')
+worksheet.write('Q1', 'additionality_and_impact')
+worksheet.write('R1', 'environmental_aspects')
+worksheet.write('S1', 'procurement')
+worksheet.write('T1', 'other_links')
+worksheet.write('U1', 'amount_currency')
+worksheet.write('V1', 'amount')
+worksheet.write('W1', 'countries_1')
+worksheet.write('X1', 'countries_1_currency')
+worksheet.write('Y1', 'countries_1_amount')
+worksheet.write('Z1', 'countries_2')
+worksheet.write('AA1', 'countries_2_currency')
+worksheet.write('AB1', 'countries_2_amount')
+worksheet.write('AC1', 'countries_3')
+worksheet.write('AD1', 'countries_3_currency')
+worksheet.write('AE1', 'countries_3_amount')
+worksheet.write('AF1', 'sectors_1')
+worksheet.write('AG1', 'sectors_1_description')
+worksheet.write('AH1', 'sectors_1_currency')
+worksheet.write('AI1', 'sectors_1_amount')
+worksheet.write('AJ1', 'sectors_2')
+worksheet.write('AK1', 'sectors_2_description')
+worksheet.write('AL1', 'sectors_2_currency')
+worksheet.write('AM1', 'sectors_2_amount')
+worksheet.write('AN1', 'sectors_3')
+worksheet.write('AO1', 'sectors_3_description')
+worksheet.write('AP1', 'sectors_3_currency')
+worksheet.write('AQ1', 'sectors_3_amount')
+worksheet.write('AR1', 'covid_project')
+
 i = 2
 for project in refactored_data:
 
@@ -530,20 +589,21 @@ for project in refactored_data:
     worksheet.write('N'+str(i), project.location)
     worksheet.write('O'+str(i), project.description)
     worksheet.write('P'+str(i), project.objectives)
-    worksheet.write('Q'+str(i), project.environmental_aspects)
-    worksheet.write('R'+str(i), project.procurement)
-    worksheet.write('S'+str(i), project.other_links)
-    worksheet.write('T'+str(i), project.amount_currency)
-    worksheet.write('U'+str(i), project.amount)
-    worksheet.write('V'+str(i), project.countries_1)
-    worksheet.write('W'+str(i), project.countries_1_currency)
-    worksheet.write('X'+str(i), project.countries_1_amount)
-    worksheet.write('Y'+str(i), project.countries_2)
-    worksheet.write('Z'+str(i), project.countries_2_currency)
-    worksheet.write('AA'+str(i), project.countries_2_amount)
-    worksheet.write('AB'+str(i), project.countries_3)
-    worksheet.write('AC'+str(i), project.countries_3_currency)
-    worksheet.write('AD'+str(i), project.countries_3_amount)
+    worksheet.write('Q'+str(i), project.additionality_and_impact)
+    worksheet.write('R'+str(i), project.environmental_aspects)
+    worksheet.write('S'+str(i), project.procurement)
+    worksheet.write('T'+str(i), project.other_links)
+    worksheet.write('U'+str(i), project.amount_currency)
+    worksheet.write('V'+str(i), project.amount)
+    worksheet.write('W'+str(i), project.countries_1)
+    worksheet.write('X'+str(i), project.countries_1_currency)
+    worksheet.write('Y'+str(i), project.countries_1_amount)
+    worksheet.write('Z'+str(i), project.countries_2)
+    worksheet.write('AA'+str(i), project.countries_2_currency)
+    worksheet.write('AB'+str(i), project.countries_2_amount)
+    worksheet.write('AC'+str(i), project.countries_3)
+    worksheet.write('AD'+str(i), project.countries_3_currency)
+    worksheet.write('AE'+str(i), project.countries_3_amount)
     worksheet.write('AF'+str(i), project.sectors_1)
     worksheet.write('AG'+str(i), project.sectors_1_description)
     worksheet.write('AH'+str(i), project.sectors_1_currency)
