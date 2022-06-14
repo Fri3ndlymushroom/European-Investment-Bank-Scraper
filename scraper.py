@@ -14,7 +14,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 service = ChromeService(executable_path=ChromeDriverManager().install())
 browser = webdriver.Chrome(service=service)
 
-TEST_MODE = True
+TEST_MODE = False
 
 
 def goToPage(url):
