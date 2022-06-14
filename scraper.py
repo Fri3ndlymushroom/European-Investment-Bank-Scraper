@@ -14,7 +14,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 service = ChromeService(executable_path=ChromeDriverManager().install())
 browser = webdriver.Chrome(service=service)
 
-TEST_MODE = False
+TEST_MODE = True
 
 
 def goToPage(url):
@@ -106,7 +106,7 @@ raw_data = []
 
 if TEST_MODE:
     links = ["https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all/20210690",
-             "https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all//20210116"]
+             "https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all//20210116", "https://www.eib.org/en/projects/all/20210604", "https://www.eib.org/en/projects/all/20200045"]
 
 y = 0
 for link in links:
@@ -138,29 +138,31 @@ for link in links:
         found_summary_sheet = False
 
     if (found_summary_sheet):
+        try:
+            currentProject.release_date = returnIfDefined(batch[1])
+            currentProject.status = returnIfDefined(batch[4])
+            currentProject.reference = returnIfDefined(batch[5])
+            currentProject.project_name = returnIfDefined(batch[8])
+            currentProject.promoter = returnIfDefined(batch[9])
+            currentProject.proposed = returnIfDefined(batch[12])
+            currentProject.total_cost = returnIfDefined(batch[13])
+            currentProject.location = returnIfDefined(batch[16])
+            currentProject.sector = returnIfDefined(batch[17])
+            currentProject.description = returnIfDefined(batch[20])
+            currentProject.objectives = returnIfDefined(batch[21])
 
-        currentProject.release_date = returnIfDefined(batch[1])
-        currentProject.status = returnIfDefined(batch[4])
-        currentProject.reference = returnIfDefined(batch[5])
-        currentProject.project_name = returnIfDefined(batch[8])
-        currentProject.promoter = returnIfDefined(batch[9])
-        currentProject.proposed = returnIfDefined(batch[12])
-        currentProject.total_cost = returnIfDefined(batch[13])
-        currentProject.location = returnIfDefined(batch[16])
-        currentProject.sector = returnIfDefined(batch[17])
-        currentProject.description = returnIfDefined(batch[20])
-        currentProject.objectives = returnIfDefined(batch[21])
+            AdditionalityAndImpactOffset = 0
+            if len(batch) > 36:
+                AdditionalityAndImpactOffset = 2
+                currentProject.additionality_and_impact = returnIfDefined(
+                    batch[23])
 
-        AdditionalityAndImpactOffset = 0
-        if len(batch) > 36:
-            AdditionalityAndImpactOffset = 2
-            currentProject.additionality_and_impact = returnIfDefined(
-                batch[23])
-
-        currentProject.environmental_aspects = returnIfDefined(
-            batch[24 + AdditionalityAndImpactOffset])
-        currentProject.procurement = returnIfDefined(
-            batch[25 + AdditionalityAndImpactOffset])
+            currentProject.environmental_aspects = returnIfDefined(
+                batch[24 + AdditionalityAndImpactOffset])
+            currentProject.procurement = returnIfDefined(
+                batch[25 + AdditionalityAndImpactOffset])
+        except:
+            x = 1
 
     # links
     batch = soup.find_all(
@@ -412,6 +414,58 @@ for project in raw_data:
             current.countries_3 = "No Entry"
             current.countries_3_currency = "No Entry"
             current.countries_3_amount = "No Entry"
+
+        if len(content_lines) > 6:
+            current.countries_4 = content_lines[6]
+            current.countries_4_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[7])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[7])
+            current.countries_4_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        else:
+            current.countries_4 = "No Entry"
+            current.countries_4_currency = "No Entry"
+            current.countries_4_amount = "No Entry"
+
+        if len(content_lines) > 8:
+            current.countries_5 = content_lines[8]
+            current.countries_5_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[9])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[9])
+            current.countries_5_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        else:
+            current.countries_5 = "No Entry"
+            current.countries_5_currency = "No Entry"
+            current.countries_5_amount = "No Entry"
+
+        if len(content_lines) > 10:
+            current.countries_6 = content_lines[10]
+            current.countries_6_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[11])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[11])
+            current.countries_6_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        else:
+            current.countries_6 = "No Entry"
+            current.countries_6_currency = "No Entry"
+            current.countries_6_amount = "No Entry"
+
+        if len(content_lines) > 12:
+            current.countries_7 = content_lines[12]
+            current.countries_7_currency = re.findall(
+                "(?<=: )(.*?)(?= )", content_lines[13])[0]
+            currency_and_amount = re.findall(
+                "(?<= )(.+?)(?=$)", content_lines[13])
+            current.countries_7_amount = re.findall(
+                "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
+        else:
+            current.countries_7 = "No Entry"
+            current.countries_7_currency = "No Entry"
+            current.countries_7_amount = "No Entry"
     except:
         except_value = "N/A"
         if project.countries == "":
@@ -426,6 +480,19 @@ for project in raw_data:
         current.countries_3 = except_value
         current.countries_3_currency = except_value
         current.countries_3_amount = except_value
+        current.countries_4 = except_value
+        current.countries_4_currency = except_value
+        current.countries_4_amount = except_value
+        current.countries_5 = except_value
+        current.countries_5_currency = except_value
+        current.countries_5_amount = except_value
+        current.countries_6 = except_value
+        current.countries_6_currency = except_value
+        current.countries_6_amount = except_value
+        current.countries_7 = except_value
+        current.countries_7_currency = except_value
+        current.countries_7_amount = except_value
+        
 
     # sectors
     current.sectors_1 = "No Entry"
@@ -553,19 +620,31 @@ worksheet.write('AB1', 'countries_2_amount')
 worksheet.write('AC1', 'countries_3')
 worksheet.write('AD1', 'countries_3_currency')
 worksheet.write('AE1', 'countries_3_amount')
-worksheet.write('AF1', 'sectors_1')
-worksheet.write('AG1', 'sectors_1_description')
-worksheet.write('AH1', 'sectors_1_currency')
-worksheet.write('AI1', 'sectors_1_amount')
-worksheet.write('AJ1', 'sectors_2')
-worksheet.write('AK1', 'sectors_2_description')
-worksheet.write('AL1', 'sectors_2_currency')
-worksheet.write('AM1', 'sectors_2_amount')
-worksheet.write('AN1', 'sectors_3')
-worksheet.write('AO1', 'sectors_3_description')
-worksheet.write('AP1', 'sectors_3_currency')
-worksheet.write('AQ1', 'sectors_3_amount')
-worksheet.write('AR1', 'covid_project')
+worksheet.write('AF1', 'countries_4')
+worksheet.write('AG1', 'countries_4_currency')
+worksheet.write('AH1', 'countries_4_amount')
+worksheet.write('AI1', 'countries_5')
+worksheet.write('AJ1', 'countries_5_currency')
+worksheet.write('AK1', 'countries_5_amount')
+worksheet.write('AL1', 'countries_6')
+worksheet.write('AM1', 'countries_6_currency')
+worksheet.write('AN1', 'countries_6_amount')
+worksheet.write('AO1', 'countries_7')
+worksheet.write('AP1', 'countries_7_currency')
+worksheet.write('AQ1', 'countries_7_amount')
+worksheet.write('AR1', 'sectors_1')
+worksheet.write('AS1', 'sectors_1_description')
+worksheet.write('AT1', 'sectors_1_currency')
+worksheet.write('AU1', 'sectors_1_amount')
+worksheet.write('AV1', 'sectors_2')
+worksheet.write('AW1', 'sectors_2_description')
+worksheet.write('AX1', 'sectors_2_currency')
+worksheet.write('AY1', 'sectors_2_amount')
+worksheet.write('AZ1', 'sectors_3')
+worksheet.write('BA1', 'sectors_3_description')
+worksheet.write('BB1', 'sectors_3_currency')
+worksheet.write('BC1', 'sectors_3_amount')
+worksheet.write('BD1', 'covid_project')
 
 i = 2
 for project in refactored_data:
@@ -604,19 +683,31 @@ for project in refactored_data:
     worksheet.write('AC'+str(i), project.countries_3)
     worksheet.write('AD'+str(i), project.countries_3_currency)
     worksheet.write('AE'+str(i), project.countries_3_amount)
-    worksheet.write('AF'+str(i), project.sectors_1)
-    worksheet.write('AG'+str(i), project.sectors_1_description)
-    worksheet.write('AH'+str(i), project.sectors_1_currency)
-    worksheet.write('AI'+str(i), project.sectors_1_amount)
-    worksheet.write('AJ'+str(i), project.sectors_2)
-    worksheet.write('AK'+str(i), project.sectors_2_description)
-    worksheet.write('AL'+str(i), project.sectors_2_currency)
-    worksheet.write('AM'+str(i), project.sectors_2_amount)
-    worksheet.write('AN'+str(i), project.sectors_3)
-    worksheet.write('AO'+str(i), project.sectors_3_description)
-    worksheet.write('AP'+str(i), project.sectors_3_currency)
-    worksheet.write('AQ'+str(i), project.sectors_3_amount)
-    worksheet.write('AR'+str(i), project.covid_project)
+    worksheet.write('AF'+str(i), project.countries_4)
+    worksheet.write('AG'+str(i), project.countries_4_currency)
+    worksheet.write('AH'+str(i), project.countries_4_amount)
+    worksheet.write('AI'+str(i), project.countries_5)
+    worksheet.write('AJ'+str(i), project.countries_5_currency)
+    worksheet.write('AK'+str(i), project.countries_5_amount)
+    worksheet.write('AL'+str(i), project.countries_6)
+    worksheet.write('AM'+str(i), project.countries_6_currency)
+    worksheet.write('AN'+str(i), project.countries_6_amount)
+    worksheet.write('AO'+str(i), project.countries_7)
+    worksheet.write('AP'+str(i), project.countries_7_currency)
+    worksheet.write('AQ'+str(i), project.countries_7_amount)
+    worksheet.write('AR'+str(i), project.sectors_1)
+    worksheet.write('AS'+str(i), project.sectors_1_description)
+    worksheet.write('AT'+str(i), project.sectors_1_currency)
+    worksheet.write('AU'+str(i), project.sectors_1_amount)
+    worksheet.write('AV'+str(i), project.sectors_2)
+    worksheet.write('AW'+str(i), project.sectors_2_description)
+    worksheet.write('AX'+str(i), project.sectors_2_currency)
+    worksheet.write('AY'+str(i), project.sectors_2_amount)
+    worksheet.write('AZ'+str(i), project.sectors_3)
+    worksheet.write('BA'+str(i), project.sectors_3_description)
+    worksheet.write('BB'+str(i), project.sectors_3_currency)
+    worksheet.write('BC'+str(i), project.sectors_3_amount)
+    worksheet.write('BD'+str(i), project.covid_project)
 
     i += 1
 
