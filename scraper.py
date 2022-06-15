@@ -19,7 +19,7 @@ TEST_MODE = False
 
 def goToPage(url):
     browser.get(url)
-    time.sleep(1)  # change this to edit delay between page loads
+    time.sleep(0.7)  # change this to edit delay between page loads
 
 
 def statusPrint(message):
@@ -106,7 +106,7 @@ raw_data = []
 
 if TEST_MODE:
     links = ["https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all/20210690",
-             "https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all//20210116", "https://www.eib.org/en/projects/all/20210604", "https://www.eib.org/en/projects/all/20200045"]
+             "https://www.eib.org/en/projects/all/20210768", "https://www.eib.org/en/projects/all/20210540", "https://www.eib.org/en/projects/all//20210116", "https://www.eib.org/en/projects/all/20210604", "https://www.eib.org/en/projects/all/20200045", "https://www.eib.org/en/projects/all/20200483"]
 
 y = 0
 for link in links:
@@ -151,8 +151,9 @@ for link in links:
             currentProject.description = returnIfDefined(batch[20])
             currentProject.objectives = returnIfDefined(batch[21])
 
+
             AdditionalityAndImpactOffset = 0
-            if len(batch) > 36:
+            if batch[22].strip() == "Additionality and Impact":
                 AdditionalityAndImpactOffset = 2
                 currentProject.additionality_and_impact = returnIfDefined(
                     batch[23])
