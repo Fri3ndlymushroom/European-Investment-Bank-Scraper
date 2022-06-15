@@ -216,8 +216,8 @@ for link in links:
             currentProject.countries = "N/A"
             currentProject.sectors = ""
     else:
-        currentProject.amount = "No Entry"
-        currentProject.countries = "No Entry"
+        currentProject.amount = "N/A"
+        currentProject.countries = "N/A"
         currentProject.sectors = ""
 
     try:
@@ -399,9 +399,9 @@ for project in raw_data:
             current.countries_2_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
         else:
-            current.countries_2 = "No Entry"
-            current.countries_2_currency = "No Entry"
-            current.countries_2_amount = "No Entry"
+            current.countries_2 = "N/A"
+            current.countries_2_currency = "N/A"
+            current.countries_2_amount = "N/A"
 
         if len(content_lines) > 4:
             current.countries_3 = content_lines[4]
@@ -412,9 +412,9 @@ for project in raw_data:
             current.countries_3_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
         else:
-            current.countries_3 = "No Entry"
-            current.countries_3_currency = "No Entry"
-            current.countries_3_amount = "No Entry"
+            current.countries_3 = "N/A"
+            current.countries_3_currency = "N/A"
+            current.countries_3_amount = "N/A"
 
         if len(content_lines) > 6:
             current.countries_4 = content_lines[6]
@@ -425,9 +425,9 @@ for project in raw_data:
             current.countries_4_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
         else:
-            current.countries_4 = "No Entry"
-            current.countries_4_currency = "No Entry"
-            current.countries_4_amount = "No Entry"
+            current.countries_4 = "N/A"
+            current.countries_4_currency = "N/A"
+            current.countries_4_amount = "N/A"
 
         if len(content_lines) > 8:
             current.countries_5 = content_lines[8]
@@ -438,9 +438,9 @@ for project in raw_data:
             current.countries_5_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
         else:
-            current.countries_5 = "No Entry"
-            current.countries_5_currency = "No Entry"
-            current.countries_5_amount = "No Entry"
+            current.countries_5 = "N/A"
+            current.countries_5_currency = "N/A"
+            current.countries_5_amount = "N/A"
 
         if len(content_lines) > 10:
             current.countries_6 = content_lines[10]
@@ -451,9 +451,9 @@ for project in raw_data:
             current.countries_6_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
         else:
-            current.countries_6 = "No Entry"
-            current.countries_6_currency = "No Entry"
-            current.countries_6_amount = "No Entry"
+            current.countries_6 = "N/A"
+            current.countries_6_currency = "N/A"
+            current.countries_6_amount = "N/A"
 
         if len(content_lines) > 12:
             current.countries_7 = content_lines[12]
@@ -464,13 +464,13 @@ for project in raw_data:
             current.countries_7_amount = re.findall(
                 "(?<= )(.+?)(?=$)", currency_and_amount[0])[0]
         else:
-            current.countries_7 = "No Entry"
-            current.countries_7_currency = "No Entry"
-            current.countries_7_amount = "No Entry"
+            current.countries_7 = "N/A"
+            current.countries_7_currency = "N/A"
+            current.countries_7_amount = "N/A"
     except:
         except_value = "N/A"
         if project.countries == "":
-            except_value = "No Entry"
+            except_value = "N/A"
 
         current.countries_1 = except_value
         current.countries_1_currency = except_value
@@ -496,18 +496,18 @@ for project in raw_data:
         
 
     # sectors
-    current.sectors_1 = "No Entry"
-    current.sectors_1_currency = "No Entry"
-    current.sectors_1_amount = "No Entry"
-    current.sectors_1_description = "No Entry"
-    current.sectors_2 = "No Entry"
-    current.sectors_2_currency = "No Entry"
-    current.sectors_2_amount = "No Entry"
-    current.sectors_2_description = "No Entry"
-    current.sectors_3 = "No Entry"
-    current.sectors_3_currency = "No Entry"
-    current.sectors_3_amount = "No Entry"
-    current.sectors_3_description = "No Entry"
+    current.sectors_1 = "N/A"
+    current.sectors_1_currency = "N/A"
+    current.sectors_1_amount = "N/A"
+    current.sectors_1_description = "N/A"
+    current.sectors_2 = "N/A"
+    current.sectors_2_currency = "N/A"
+    current.sectors_2_amount = "N/A"
+    current.sectors_2_description = "N/A"
+    current.sectors_3 = "N/A"
+    current.sectors_3_currency = "N/A"
+    current.sectors_3_amount = "N/A"
+    current.sectors_3_description = "N/A"
 
     try:
         cleaned = str(project.sector)
@@ -565,7 +565,7 @@ for project in raw_data:
     except:
         except_value = "N/A"
         if project.sectors == "":
-            except_value = "No Entry"
+            except_value = "N/A"
 
         current.sectors_1 = except_value
         current.sectors_1_currency = except_value
